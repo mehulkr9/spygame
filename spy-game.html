@@ -1,0 +1,2861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPY GAME</title>
+    <style>
+        /* ==========================================
+           CSS VARIABLES & ROOT STYLES
+        ========================================== */
+        :root {
+            --primary: #00f5ff;
+            --secondary: #ff00ff;
+            --accent: #ffff00;
+            --danger: #ff3366;
+            --success: #00ff88;
+            --dark: #0a0a1a;
+            --darker: #050510;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --glow-primary: 0 0 20px rgba(0, 245, 255, 0.5);
+            --glow-secondary: 0 0 20px rgba(255, 0, 255, 0.5);
+            --glow-accent: 0 0 20px rgba(255, 255, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--darker);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ==========================================
+           BACKGROUND ANIMATION
+        ========================================== */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 50%, #1a0a2e 100%);
+            overflow: hidden;
+        }
+
+        .bg-animation::before,
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-animation::before {
+            background: var(--primary);
+            top: -250px;
+            left: -250px;
+        }
+
+        .bg-animation::after {
+            background: var(--secondary);
+            bottom: -250px;
+            right: -250px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(100px, 100px) scale(1.1); }
+            50% { transform: translate(50px, -50px) scale(0.9); }
+            75% { transform: translate(-50px, 50px) scale(1.05); }
+        }
+
+        /* ==========================================
+           SCREEN CONTAINER
+        ========================================== */
+        .screen {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ==========================================
+           GLASSMORPHISM CARDS
+        ========================================== */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-card-wide {
+            max-width: 800px;
+        }
+
+        /* ==========================================
+           TYPOGRAPHY
+        ========================================== */
+        .title {
+            font-size: 4rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: var(--glow-primary);
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 245, 255, 0.5)); }
+            50% { filter: drop-shadow(0 0 40px rgba(255, 0, 255, 0.5)); }
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        /* ==========================================
+           BUTTONS
+        ========================================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #0088ff);
+            color: var(--dark);
+            box-shadow: var(--glow-primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px rgba(0, 245, 255, 0.7);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), #ff0088);
+            color: var(--text);
+            box-shadow: var(--glow-secondary);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px rgba(255, 0, 255, 0.7);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent), #ffaa00);
+            color: var(--dark);
+            box-shadow: var(--glow-accent);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #ff0044);
+            color: var(--text);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #00aa55);
+            color: var(--dark);
+        }
+
+        .btn-glass {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+        }
+
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-block {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        /* ==========================================
+           FORM ELEMENTS
+        ========================================== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 24px;
+        }
+
+        .form-select option {
+            background: var(--dark);
+            color: var(--text);
+        }
+
+        /* ==========================================
+           WORD MODE SELECTION
+        ========================================== */
+        .word-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .word-mode-btn {
+            padding: 20px 15px;
+            background: var(--glass);
+            border: 2px solid var(--glass-border);
+            border-radius: 15px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .word-mode-btn:hover {
+            border-color: var(--primary);
+            background: rgba(0, 245, 255, 0.1);
+        }
+
+        .word-mode-btn.active {
+            border-color: var(--primary);
+            background: rgba(0, 245, 255, 0.2);
+            box-shadow: var(--glow-primary);
+        }
+
+        .word-mode-btn .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .word-mode-btn .label {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* ==========================================
+           PLAYER LIST
+        ========================================== */
+        .player-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .player-item .name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-item .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .player-item .status {
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--success);
+        }
+
+        .player-item.host .status {
+            background: rgba(255, 255, 0, 0.2);
+            color: var(--accent);
+        }
+
+        /* ==========================================
+           CHAT PANEL
+        ========================================== */
+        .chat-container {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 350px;
+            max-height: 500px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .chat-container.minimized {
+            max-height: 60px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            cursor: pointer;
+        }
+
+        .chat-header h3 {
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .chat-toggle {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            max-height: 300px;
+        }
+
+        .chat-message {
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .chat-message .sender {
+            font-size: 0.8rem;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .chat-message .text {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            word-wrap: break-word;
+        }
+
+        .chat-message.own .text {
+            background: rgba(0, 245, 255, 0.1);
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .chat-send {
+            padding: 12px 20px;
+            background: var(--primary);
+            border: none;
+            border-radius: 10px;
+            color: var(--dark);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chat-send:hover {
+            transform: scale(1.05);
+        }
+
+        /* ==========================================
+           PRIVACY SCREEN (PASS DEVICE)
+        ========================================== */
+        .privacy-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(30px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .privacy-screen .icon {
+            font-size: 5rem;
+            margin-bottom: 30px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .privacy-screen .message {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .privacy-screen .player-name {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* ==========================================
+           WORD REVEAL CARD
+        ========================================== */
+        .reveal-container {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        .reveal-card {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .reveal-card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .reveal-card .front,
+        .reveal-card .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+
+        .reveal-card .front {
+            background: linear-gradient(135deg, var(--dark), #1a1a3e);
+            border: 2px solid var(--glass-border);
+        }
+
+        .reveal-card .front .tap-text {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .reveal-card .front .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .reveal-card .back {
+            background: linear-gradient(135deg, #1a0a3e, #0a1a3e);
+            border: 2px solid var(--primary);
+            transform: rotateY(180deg);
+            box-shadow: var(--glow-primary);
+        }
+
+        .reveal-card .back.spy {
+            background: linear-gradient(135deg, #3e0a1a, #3e1a0a);
+            border-color: var(--danger);
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.5);
+        }
+
+        .reveal-card .role {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .reveal-card .word {
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .reveal-card .back.spy .word {
+            background: linear-gradient(135deg, var(--danger), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* ==========================================
+           VOTING INTERFACE
+        ========================================== */
+        .vote-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .vote-btn {
+            padding: 25px 20px;
+            background: var(--glass);
+            border: 2px solid var(--glass-border);
+            border-radius: 15px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .vote-btn:hover:not(:disabled) {
+            border-color: var(--danger);
+            background: rgba(255, 51, 102, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .vote-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .vote-btn.selected {
+            border-color: var(--danger);
+            background: rgba(255, 51, 102, 0.2);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.3);
+        }
+
+        .vote-btn .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+
+        .vote-btn .name {
+            font-weight: 600;
+        }
+
+        /* ==========================================
+           SPY REVEAL ANIMATION
+        ========================================== */
+        .spy-reveal {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner-container {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .spinner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid var(--glass-border);
+            border-top-color: var(--primary);
+            border-right-color: var(--secondary);
+            position: relative;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner.stopped {
+            animation: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--dark), var(--darker));
+            border: 2px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner-center .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .spinner-center .text {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        .spy-revealed {
+            animation: revealPop 0.5s ease-out;
+        }
+
+        @keyframes revealPop {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .spy-revealed .spy-name {
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--danger), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .spy-revealed .spy-label {
+            font-size: 0.9rem;
+            color: var(--danger);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        /* ==========================================
+           VOTE RESULTS
+        ========================================== */
+        .vote-results {
+            margin-top: 30px;
+        }
+
+        .vote-result-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .vote-result-item .voter {
+            color: var(--text-muted);
+        }
+
+        .vote-result-item .voted-for {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .vote-result-item .arrow {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        /* ==========================================
+           SCOREBOARD
+        ========================================== */
+        .scoreboard {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .scoreboard th,
+        .scoreboard td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .scoreboard th {
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .scoreboard tr {
+            transition: background 0.3s ease;
+        }
+
+        .scoreboard tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .scoreboard .spy-row {
+            background: rgba(255, 51, 102, 0.1);
+        }
+
+        .scoreboard .spy-row td:first-child::after {
+            content: ' 🕵️';
+        }
+
+        .scoreboard .score-positive {
+            color: var(--success);
+        }
+
+        .scoreboard .score-negative {
+            color: var(--danger);
+        }
+
+        .scoreboard .rank {
+            width: 50px;
+            text-align: center;
+        }
+
+        .scoreboard .rank-1 {
+            color: gold;
+        }
+
+        .scoreboard .rank-2 {
+            color: silver;
+        }
+
+        .scoreboard .rank-3 {
+            color: #cd7f32;
+        }
+
+        /* ==========================================
+           WORD INFO DISPLAY
+        ========================================== */
+        .word-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .word-box {
+            padding: 25px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .word-box .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .word-box .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .word-box.spy-word .value {
+            color: var(--danger);
+        }
+
+        /* ==========================================
+           SOUND TOGGLE
+        ========================================== */
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 150;
+            transition: all 0.3s ease;
+        }
+
+        .sound-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.1);
+        }
+
+        .sound-toggle.muted {
+            color: var(--danger);
+        }
+
+        /* ==========================================
+           ROOM CODE DISPLAY
+        ========================================== */
+        .room-code-display {
+            text-align: center;
+            padding: 30px;
+            background: var(--glass);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+
+        .room-code-display .label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .room-code-display .code {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 10px;
+            color: var(--primary);
+            font-family: monospace;
+        }
+
+        .room-code-display .copy-btn {
+            margin-top: 15px;
+            padding: 10px 25px;
+            font-size: 0.9rem;
+        }
+
+        /* ==========================================
+           LOADING / WAITING STATES
+        ========================================== */
+        .loading-dots {
+            display: inline-flex;
+            gap: 5px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: loadingDot 1.4s ease-in-out infinite;
+        }
+
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes loadingDot {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ==========================================
+           RESPONSIVE DESIGN
+        ========================================== */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .glass-card {
+                padding: 25px;
+                margin: 10px;
+            }
+
+            .chat-container {
+                right: 10px;
+                left: 10px;
+                width: auto;
+                bottom: 10px;
+            }
+
+            .vote-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .word-info {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+            }
+
+            .spinner-container {
+                width: 250px;
+                height: 250px;
+            }
+
+            .spinner-center {
+                width: 160px;
+                height: 160px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 2rem;
+            }
+
+            .word-mode-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .scoreboard th,
+            .scoreboard td {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* ==========================================
+           UTILITY CLASSES
+        ========================================== */
+        .text-center { text-align: center; }
+        .text-muted { color: var(--text-muted); }
+        .text-primary { color: var(--primary); }
+        .text-danger { color: var(--danger); }
+        .text-success { color: var(--success); }
+        .mt-20 { margin-top: 20px; }
+        .mb-20 { margin-bottom: 20px; }
+        .hidden { display: none !important; }
+
+        /* ==========================================
+           CUSTOM MODAL
+        ========================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalPop 0.3s ease;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--danger);
+        }
+
+        .modal-message {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .modal-buttons .btn {
+            min-width: 120px;
+        }
+
+        /* ==========================================
+           SCROLLBAR STYLING
+        ========================================== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--darker);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation"></div>
+
+    <!-- Sound Toggle Button -->
+    <button class="sound-toggle" id="soundToggle" title="Toggle Sound">🔊</button>
+
+    <!-- ==========================================
+         SCREEN 1: HOME / MODE SELECTION
+    ========================================== -->
+    <div class="screen active" id="homeScreen">
+        <div class="glass-card">
+            <h1 class="title">SPY GAME</h1>
+            <p class="subtitle">Uncover the spy among you</p>
+            
+            <button class="btn btn-primary btn-block" onclick="selectMode('offline')">
+                🎮 Play Game
+            </button>
+            <!-- <button class="btn btn-secondary btn-block" onclick="selectMode('online')">
+                🌐 Online Multiplayer
+            </button> -->
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 2: ONLINE MULTIPLAYER OPTIONS
+    ========================================== -->
+    <div class="screen" id="onlineScreen">
+        <div class="glass-card">
+            <h2 class="section-title">Online Multiplayer</h2>
+            
+            <button class="btn btn-primary btn-block" onclick="createRoom()">
+                🏠 Create Room
+            </button>
+            <button class="btn btn-secondary btn-block" onclick="showJoinRoom()">
+                🚪 Join Room
+            </button>
+            
+            <div id="joinRoomForm" class="hidden mt-20">
+                <div class="form-group">
+                    <label class="form-label">Enter Room Code</label>
+                    <input type="text" class="form-input" id="roomCodeInput" 
+                           placeholder="Enter 5-digit code" maxlength="6" 
+                           style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
+                </div>
+                <button class="btn btn-accent btn-block" onclick="joinRoom()">
+                    Join Game
+                </button>
+            </div>
+            
+            <button class="btn btn-glass btn-block mt-20" onclick="goToScreen('homeScreen')">
+                ← Back
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 3: ROOM LOBBY
+    ========================================== -->
+    <div class="screen" id="lobbyScreen">
+        <div class="glass-card glass-card-wide">
+            <h2 class="section-title">Game Lobby</h2>
+            
+            <div class="room-code-display" id="roomCodeDisplay">
+                <div class="label">Room Code</div>
+                <div class="code" id="displayRoomCode">-----</div>
+                <button class="btn btn-glass copy-btn" onclick="copyRoomCode()">
+                    📋 Copy Code
+                </button>
+            </div>
+            
+            <h3 class="mb-20">Players (<span id="playerCount">0</span>/<span id="maxPlayers">10</span>)</h3>
+            <ul class="player-list" id="lobbyPlayerList"></ul>
+            
+            <div id="hostControls">
+                <div class="form-group">
+                    <label class="form-label">Number of Players</label>
+                    <select class="form-select" id="lobbyPlayerCount">
+                        <option value="3">3 Players</option>
+                        <option value="4">4 Players</option>
+                        <option value="5">5 Players</option>
+                        <option value="6">6 Players</option>
+                        <option value="7">7 Players</option>
+                        <option value="8">8 Players</option>
+                        <option value="9">9 Players</option>
+                        <option value="10">10 Players</option>
+                    </select>
+                </div>
+                <button class="btn btn-success btn-block" id="startGameBtn" onclick="startOnlineGame()" disabled>
+                    🚀 Start Game
+                </button>
+            </div>
+            
+            <button class="btn btn-danger btn-block mt-20" onclick="leaveRoom()">
+                Leave Room
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 4: PLAYER SETUP (OFFLINE)
+    ========================================== -->
+    <div class="screen" id="setupScreen">
+        <div class="glass-card">
+            <h2 class="section-title">Game Setup</h2>
+            
+            <div class="form-group">
+                <label class="form-label">Number of Players</label>
+                <select class="form-select" id="playerCountSelect" onchange="updatePlayerInputs()">
+                    <option value="3">3 Players</option>
+                    <option value="4" selected>4 Players</option>
+                    <option value="5">5 Players</option>
+                    <option value="6">6 Players</option>
+                    <option value="7">7 Players</option>
+                    <option value="8">8 Players</option>
+                    <option value="9">9 Players</option>
+                    <option value="10">10 Players</option>
+                </select>
+            </div>
+            
+            <div id="playerNamesContainer"></div>
+            
+            <button class="btn btn-primary btn-block" onclick="goToWordSetup()">
+                Continue →
+            </button>
+            <button class="btn btn-glass btn-block" onclick="goToScreen('homeScreen')">
+                ← Back
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 5: WORD SETUP
+    ========================================== -->
+    <div class="screen" id="wordSetupScreen">
+        <div class="glass-card">
+            <h2 class="section-title">Word Setup</h2>
+            
+            <p class="text-muted text-center mb-20">Choose how to generate words</p>
+            
+            <div class="word-mode-grid">
+                <div class="word-mode-btn active" data-mode="ai" onclick="selectWordMode('ai')">
+                    <div class="icon">🧠</div>
+                    <div class="label">AI Generated</div>
+                </div>
+                <div class="word-mode-btn" data-mode="suggested" onclick="selectWordMode('suggested')">
+                    <div class="icon">📦</div>
+                    <div class="label">Suggested</div>
+                </div>
+                <div class="word-mode-btn" data-mode="manual" onclick="selectWordMode('manual')">
+                    <div class="icon">✍️</div>
+                    <div class="label">Manual</div>
+                </div>
+            </div>
+            
+            <button class="btn btn-secondary btn-block mt-20" onclick="surpriseStart()">
+                🎲 Surprise Mode - Start Now!
+            </button>
+            
+            <div id="manualWordInput" class="hidden">
+                <div class="form-group">
+                    <label class="form-label">Common Word (for regular players)</label>
+                    <input type="text" class="form-input" id="commonWordInput" placeholder="e.g., Apple">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Spy Word (similar but different)</label>
+                    <input type="text" class="form-input" id="spyWordInput" placeholder="e.g., Orange">
+                </div>
+            </div>
+            
+            <div id="wordPreview" class="word-info hidden">
+                <div class="word-box">
+                    <div class="label">Common Word</div>
+                    <div class="value" id="previewCommon">-</div>
+                </div>
+                <div class="word-box spy-word">
+                    <div class="label">Spy Word</div>
+                    <div class="value" id="previewSpy">-</div>
+                </div>
+            </div>
+            
+            <button class="btn btn-accent btn-block" id="generateWordsBtn" onclick="generateWords()">
+                🎲 Generate Words
+            </button>
+            
+            <button class="btn btn-success btn-block mt-20" id="startRoundBtn" onclick="startRound()" disabled>
+                Start Round →
+            </button>
+            <button class="btn btn-glass btn-block" onclick="goToScreen('setupScreen')">
+                ← Back
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 6: PRIVACY / PASS DEVICE
+    ========================================== -->
+    <div class="screen" id="privacyScreen">
+        <div class="privacy-screen">
+            <div class="icon">🔒</div>
+            <div class="message">Pass the device to</div>
+            <div class="player-name" id="privacyPlayerName">Player X</div>
+            <button class="btn btn-primary" onclick="playerReady()">
+                👁️ I Am Ready
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 7: WORD REVEAL
+    ========================================== -->
+    <div class="screen" id="revealScreen">
+        <div class="glass-card">
+            <h2 class="section-title text-center">
+                <span id="revealPlayerName">Player X</span>'s Turn
+            </h2>
+            
+            <div class="reveal-container">
+                <div class="reveal-card" id="revealCard" onclick="flipCard()">
+                    <div class="front">
+                        <div class="icon">🎴</div>
+                        <div class="tap-text">Tap to Reveal</div>
+                    </div>
+                    <div class="back" id="revealBack">
+                        <div class="role" id="revealRole">CITIZEN</div>
+                        <div class="word" id="revealWord">APPLE</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-secondary btn-block" id="nextPlayerBtn" onclick="nextPlayer()" disabled>
+                Hide & Next Player →
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 8: DISCUSSION PHASE
+    ========================================== -->
+    <div class="screen" id="discussionScreen">
+        <div class="glass-card">
+            <h2 class="section-title">💬 Discussion Time</h2>
+            <p class="text-center text-muted mb-20">
+                Discuss amongst yourselves to find the spy!<br>
+                The spy has a different word and must blend in.
+            </p>
+            
+            <div class="text-center">
+                <div style="font-size: 3rem; margin: 20px 0;" id="discussionTimer">03:00</div>
+                <p class="text-muted">Time remaining</p>
+            </div>
+            
+            <button class="btn btn-danger btn-block mt-20" onclick="startVoting()">
+                ⚖️ Start Voting
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 9: VOTING PRIVACY
+    ========================================== -->
+    <div class="screen" id="votePrivacyScreen">
+        <div class="privacy-screen">
+            <div class="icon">🗳️</div>
+            <div class="message">Pass the device to</div>
+            <div class="player-name" id="votePrivacyPlayerName">Player X</div>
+            <button class="btn btn-primary" onclick="voterReady()">
+                👁️ I Am Ready to Vote
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 10: VOTING
+    ========================================== -->
+    <div class="screen" id="votingScreen">
+        <div class="glass-card glass-card-wide">
+            <h2 class="section-title">
+                <span id="votingPlayerName">Player X</span>, Vote for the Spy
+            </h2>
+            <p class="text-center text-muted mb-20">Who do you think is the spy?</p>
+            
+            <div class="vote-grid" id="voteGrid"></div>
+            
+            <button class="btn btn-danger btn-block" id="confirmVoteBtn" onclick="confirmVote()" disabled>
+                ✓ Confirm Vote
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 11: SPY REVEAL
+    ========================================== -->
+    <div class="screen" id="spyRevealScreen">
+        <div class="glass-card glass-card-wide">
+            <h2 class="section-title">🔍 Revealing the Spy...</h2>
+            
+            <div class="spy-reveal">
+                <div class="spinner-container">
+                    <div class="spinner" id="spySpinner"></div>
+                    <div class="spinner-center" id="spinnerCenter">
+                        <div class="icon">🕵️</div>
+                        <div class="text">Who is it?</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="spyRevealInfo" class="hidden">
+                <div class="word-info">
+                    <div class="word-box">
+                        <div class="label">Common Word</div>
+                        <div class="value" id="finalCommonWord">-</div>
+                    </div>
+                    <div class="word-box spy-word">
+                        <div class="label">Spy Word</div>
+                        <div class="value" id="finalSpyWord">-</div>
+                    </div>
+                </div>
+                
+                <h3 class="mt-20 mb-20">Vote Results</h3>
+                <div class="vote-results" id="voteResults"></div>
+            </div>
+            
+            <button class="btn btn-primary btn-block mt-20 hidden" id="showScoreboardBtn" onclick="showScoreboard()">
+                📊 View Scoreboard
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 12: SCOREBOARD
+    ========================================== -->
+    <div class="screen" id="scoreboardScreen">
+        <div class="glass-card glass-card-wide">
+            <h2 class="section-title">📊 Scoreboard</h2>
+            <p class="text-center text-muted mb-20">Round <span id="roundNumber">1</span> Complete</p>
+            
+            <table class="scoreboard">
+                <thead>
+                    <tr>
+                        <th class="rank">#</th>
+                        <th>Player</th>
+                        <th>Round Score</th>
+                        <th>Total Score</th>
+                    </tr>
+                </thead>
+                <tbody id="scoreboardBody"></tbody>
+            </table>
+            
+            <div class="btn-group mt-20">
+                <button class="btn btn-primary" onclick="replayGame()">
+                    🔁 Replay Game
+                </button>
+                <button class="btn btn-danger" onclick="exitGame()">
+                    ❌ Exit Game
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         CUSTOM MODAL
+    ========================================== -->
+    <div class="modal-overlay hidden" id="modalOverlay">
+        <div class="modal-card">
+            <div class="modal-icon" id="modalIcon">⚠️</div>
+            <h2 class="modal-title" id="modalTitle">Exit Game?</h2>
+            <p class="modal-message" id="modalMessage">Are you sure you want to exit? All scores will be reset.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-danger" id="modalConfirmBtn" onclick="confirmExit()">Exit Game</button>
+                <button class="btn btn-glass" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         CHAT PANEL (Online Mode Only)
+    ========================================== -->
+    <div class="chat-container hidden" id="chatContainer">
+        <div class="chat-header" onclick="toggleChat()">
+            <h3>💬 Game Chat</h3>
+            <button class="chat-toggle" id="chatToggleBtn">−</button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chatInput" 
+                   placeholder="Type a message..." maxlength="200"
+                   onkeypress="handleChatKeypress(event)">
+            <button class="chat-send" onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         JAVASCRIPT
+    ========================================== -->
+    <script>
+        // ==========================================
+        // GAME STATE MANAGEMENT
+        // ==========================================
+        const GameState = {
+            mode: 'offline', // 'offline' or 'online'
+            roomCode: null,
+            isHost: false,
+            currentPlayerId: null,
+            players: [],
+            spyIndex: -1,
+            commonWord: '',
+            spyWord: '',
+            wordMode: 'ai',
+            currentPlayerIndex: 0,
+            votes: {},
+            roundScores: {},
+            totalScores: {},
+            round: 1,
+            discussionTime: 180, // 3 minutes
+            soundEnabled: true,
+            chatMessages: [],
+            gamePhase: 'setup' // setup, reveal, discussion, voting, results
+        };
+
+        // ==========================================
+        // WORD PAIRS DATABASE
+        // ==========================================
+        const WORD_PAIRS = [
+            { common: 'Apple', spy: 'Orange' },
+            { common: 'Dog', spy: 'Wolf' },
+            { common: 'Pizza', spy: 'Burger' },
+            { common: 'Beach', spy: 'Pool' },
+            { common: 'Guitar', spy: 'Violin' },
+            { common: 'Coffee', spy: 'Tea' },
+            { common: 'Mountain', spy: 'Hill' },
+            { common: 'Airplane', spy: 'Helicopter' },
+            { common: 'Doctor', spy: 'Nurse' },
+            { common: 'Soccer', spy: 'Basketball' },
+            { common: 'Lion', spy: 'Tiger' },
+            { common: 'Ocean', spy: 'Lake' },
+            { common: 'Train', spy: 'Bus' },
+            { common: 'Piano', spy: 'Keyboard' },
+            { common: 'Snow', spy: 'Rain' },
+            { common: 'Castle', spy: 'Palace' },
+            { common: 'Sword', spy: 'Knife' },
+            { common: 'Dragon', spy: 'Dinosaur' },
+            { common: 'Moon', spy: 'Sun' },
+            { common: 'King', spy: 'Queen' },
+            { common: 'Forest', spy: 'Jungle' },
+            { common: 'Diamond', spy: 'Ruby' },
+            { common: 'Winter', spy: 'Autumn' },
+            { common: 'Hospital', spy: 'Clinic' },
+            { common: 'Shark', spy: 'Whale' },
+            { common: 'Chocolate', spy: 'Vanilla' },
+            { common: 'Bicycle', spy: 'Motorcycle' },
+            { common: 'Eagle', spy: 'Hawk' },
+            { common: 'Paris', spy: 'London' },
+            { common: 'Vampire', spy: 'Zombie' },
+            { common: 'Astronaut', spy: 'Pilot' },
+            { common: 'Rainbow', spy: 'Aurora' },
+            { common: 'Cheese', spy: 'Butter' },
+            { common: 'Tornado', spy: 'Hurricane' },
+            { common: 'Mansion', spy: 'Villa' },
+            { common: 'Dolphin', spy: 'Seal' },
+            { common: 'Sunrise', spy: 'Sunset' },
+            { common: 'Cowboy', spy: 'Sheriff' },
+            { common: 'Volcano', spy: 'Geyser' },
+            { common: 'Pirate', spy: 'Sailor' }
+        ];
+
+        // AI-generated related word pairs (simulated)
+        const AI_WORD_PAIRS = [
+            { common: 'Laptop', spy: 'Tablet' },
+            { common: 'Instagram', spy: 'TikTok' },
+            { common: 'Netflix', spy: 'YouTube' },
+            { common: 'Tesla', spy: 'Ferrari' },
+            { common: 'iPhone', spy: 'Android' },
+            { common: 'Amazon', spy: 'eBay' },
+            { common: 'Spotify', spy: 'Apple Music' },
+            { common: 'Uber', spy: 'Taxi' },
+            { common: 'Bitcoin', spy: 'Ethereum' },
+            { common: 'Pizza Hut', spy: 'Dominos' },
+            { common: 'Starbucks', spy: 'Dunkin' },
+            { common: 'Nike', spy: 'Adidas' },
+            { common: 'Marvel', spy: 'DC' },
+            { common: 'Minecraft', spy: 'Roblox' },
+            { common: 'Xbox', spy: 'PlayStation' },
+            { common: 'Zoom', spy: 'Teams' },
+            { common: 'WhatsApp', spy: 'Telegram' },
+            { common: 'Google', spy: 'Bing' },
+            { common: 'Twitter', spy: 'Facebook' },
+            { common: 'Snapchat', spy: 'BeReal' }
+        ];
+
+        // ==========================================
+        // DYNAMIC WORD GENERATION SYSTEM
+        // Creates virtually unlimited word pairs from categories
+        // ==========================================
+        const WORD_BANKS = {
+            fruits: ['Apple', 'Banana', 'Orange', 'Mango', 'Grape', 'Lemon', 'Peach', 'Cherry', 'Strawberry', 'Watermelon', 'Pineapple', 'Coconut', 'Papaya', 'Kiwi', 'Plum', 'Pear', 'Guava', 'Melon', 'Fig', 'Date'],
+            animals: ['Dog', 'Cat', 'Lion', 'Tiger', 'Elephant', 'Monkey', 'Bear', 'Wolf', 'Fox', 'Rabbit', 'Horse', 'Cow', 'Sheep', 'Goat', 'Pig', 'Deer', 'Zebra', 'Giraffe', 'Kangaroo', 'Penguin', 'Eagle', 'Owl', 'Parrot', 'Duck', 'Chicken', 'Fish', 'Shark', 'Whale', 'Dolphin', 'Frog', 'Snake', 'Turtle', 'Crab', 'Ant', 'Bee', 'Butterfly', 'Spider', 'Mouse', 'Rat', 'Squirrel'],
+            foods: ['Pizza', 'Burger', 'Pasta', 'Rice', 'Bread', 'Cake', 'Cookie', 'Sandwich', 'Soup', 'Salad', 'Noodles', 'Taco', 'Sushi', 'Curry', 'Steak', 'Chicken', 'Fish', 'Egg', 'Cheese', 'Butter', 'Milk', 'Yogurt', 'Ice Cream', 'Chocolate', 'Candy', 'Chips', 'Popcorn', 'Pancake', 'Waffle', 'Donut'],
+            drinks: ['Water', 'Milk', 'Tea', 'Coffee', 'Juice', 'Soda', 'Lemonade', 'Smoothie', 'Shake', 'Cocoa', 'Cola', 'Sprite', 'Fanta', 'Pepsi'],
+            vehicles: ['Car', 'Bus', 'Truck', 'Bike', 'Motorcycle', 'Train', 'Plane', 'Ship', 'Boat', 'Helicopter', 'Taxi', 'Van', 'Jeep', 'Scooter', 'Tractor', 'Ambulance', 'Rickshaw', 'Bicycle', 'Rocket', 'Submarine'],
+            bodyParts: ['Hand', 'Foot', 'Eye', 'Ear', 'Nose', 'Mouth', 'Head', 'Arm', 'Leg', 'Finger', 'Toe', 'Hair', 'Face', 'Neck', 'Back', 'Chest', 'Knee', 'Elbow', 'Shoulder', 'Stomach'],
+            clothes: ['Shirt', 'Pants', 'Dress', 'Skirt', 'Jacket', 'Coat', 'Sweater', 'Jeans', 'Shorts', 'Sock', 'Shoe', 'Boot', 'Hat', 'Cap', 'Scarf', 'Gloves', 'Tie', 'Belt', 'Watch', 'Ring'],
+            furniture: ['Chair', 'Table', 'Bed', 'Sofa', 'Desk', 'Lamp', 'Mirror', 'Shelf', 'Drawer', 'Cupboard', 'Wardrobe', 'Couch', 'Stool', 'Bench', 'Carpet', 'Curtain', 'Pillow', 'Blanket', 'Mattress', 'Clock'],
+            nature: ['Sun', 'Moon', 'Star', 'Cloud', 'Rain', 'Snow', 'Wind', 'Storm', 'Rainbow', 'Thunder', 'Tree', 'Flower', 'Grass', 'Mountain', 'River', 'Lake', 'Ocean', 'Beach', 'Forest', 'Desert', 'Island', 'Valley', 'Hill', 'Waterfall', 'Cave'],
+            colors: ['Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Black', 'White', 'Brown', 'Gray', 'Gold', 'Silver', 'Violet', 'Indigo'],
+            sports: ['Football', 'Cricket', 'Tennis', 'Basketball', 'Hockey', 'Golf', 'Swimming', 'Running', 'Boxing', 'Wrestling', 'Badminton', 'Volleyball', 'Baseball', 'Rugby', 'Skating', 'Skiing', 'Surfing', 'Cycling', 'Archery', 'Gymnastics'],
+            professions: ['Doctor', 'Teacher', 'Engineer', 'Lawyer', 'Nurse', 'Pilot', 'Chef', 'Artist', 'Singer', 'Actor', 'Writer', 'Driver', 'Farmer', 'Soldier', 'Police', 'Fireman', 'Dentist', 'Barber', 'Tailor', 'Baker', 'Butcher', 'Painter', 'Plumber', 'Mechanic', 'Carpenter'],
+            places: ['School', 'Hospital', 'Church', 'Temple', 'Mosque', 'Park', 'Mall', 'Market', 'Shop', 'Store', 'Bank', 'Hotel', 'Restaurant', 'Cafe', 'Cinema', 'Library', 'Museum', 'Zoo', 'Airport', 'Station', 'Office', 'Factory', 'Gym', 'Stadium', 'Theater'],
+            family: ['Mother', 'Father', 'Brother', 'Sister', 'Son', 'Daughter', 'Uncle', 'Aunt', 'Cousin', 'Grandma', 'Grandpa', 'Husband', 'Wife', 'Baby', 'Child'],
+            kitchen: ['Spoon', 'Fork', 'Knife', 'Plate', 'Bowl', 'Cup', 'Glass', 'Pot', 'Pan', 'Oven', 'Stove', 'Fridge', 'Microwave', 'Blender', 'Toaster', 'Kettle', 'Bottle', 'Jar', 'Tray', 'Napkin'],
+            objects: ['Book', 'Pen', 'Pencil', 'Paper', 'Bag', 'Box', 'Key', 'Lock', 'Door', 'Window', 'Ball', 'Toy', 'Doll', 'Kite', 'Balloon', 'Candle', 'Rope', 'Stick', 'Stone', 'Brick', 'Ladder', 'Bucket', 'Basket', 'Umbrella', 'Fan', 'Light', 'Bulb', 'Wire', 'Pipe', 'Wheel'],
+            music: ['Guitar', 'Piano', 'Drum', 'Violin', 'Flute', 'Trumpet', 'Saxophone', 'Harmonium', 'Tabla', 'Sitar', 'Harp', 'Bell', 'Horn', 'Whistle'],
+            tools: ['Hammer', 'Screwdriver', 'Wrench', 'Plier', 'Saw', 'Drill', 'Axe', 'Shovel', 'Rake', 'Brush', 'Broom', 'Mop', 'Scissors', 'Needle', 'Thread', 'Tape', 'Glue', 'Nail', 'Screw', 'Bolt'],
+            electronics: ['Phone', 'TV', 'Computer', 'Laptop', 'Tablet', 'Camera', 'Radio', 'Speaker', 'Headphone', 'Charger', 'Battery', 'Remote', 'Printer', 'Mouse', 'Keyboard'],
+            buildings: ['House', 'Building', 'Tower', 'Castle', 'Palace', 'Hut', 'Tent', 'Bridge', 'Tunnel', 'Wall', 'Fence', 'Gate', 'Roof', 'Floor', 'Stairs'],
+            time: ['Day', 'Night', 'Morning', 'Evening', 'Noon', 'Midnight', 'Dawn', 'Dusk', 'Hour', 'Minute', 'Second', 'Week', 'Month', 'Year', 'Today', 'Tomorrow', 'Yesterday'],
+            weather: ['Sunny', 'Rainy', 'Cloudy', 'Windy', 'Stormy', 'Snowy', 'Foggy', 'Hot', 'Cold', 'Warm', 'Cool', 'Humid', 'Dry'],
+            emotions: ['Happy', 'Sad', 'Angry', 'Scared', 'Excited', 'Tired', 'Bored', 'Surprised', 'Confused', 'Proud', 'Shy', 'Nervous', 'Calm', 'Worried', 'Jealous'],
+            shapes: ['Circle', 'Square', 'Triangle', 'Rectangle', 'Star', 'Heart', 'Diamond', 'Oval', 'Cube', 'Sphere', 'Cone', 'Cylinder', 'Pyramid'],
+            countries: ['India', 'China', 'Japan', 'Korea', 'America', 'Canada', 'Brazil', 'Mexico', 'France', 'Germany', 'Italy', 'Spain', 'Russia', 'Australia', 'England', 'Egypt', 'Dubai', 'Singapore', 'Thailand', 'Nepal'],
+            movies: ['Batman', 'Superman', 'Spiderman', 'Ironman', 'Thor', 'Hulk', 'Titanic', 'Avatar', 'Frozen', 'Moana', 'Shrek', 'Minions', 'Tarzan', 'Aladdin', 'Cinderella'],
+            games: ['Chess', 'Carrom', 'Ludo', 'Cards', 'Puzzle', 'Dice', 'Domino', 'Monopoly', 'Jenga', 'Uno'],
+            insects: ['Ant', 'Bee', 'Butterfly', 'Mosquito', 'Fly', 'Spider', 'Cockroach', 'Grasshopper', 'Ladybug', 'Beetle', 'Worm', 'Caterpillar', 'Dragonfly', 'Moth', 'Cricket'],
+            flowers: ['Rose', 'Lily', 'Tulip', 'Sunflower', 'Lotus', 'Jasmine', 'Orchid', 'Daisy', 'Marigold', 'Hibiscus', 'Lavender', 'Dahlia', 'Iris', 'Daffodil', 'Poppy']
+        };
+
+        // Generate a random word pair from same category
+        function generateSimpleWordPair() {
+            const categories = Object.keys(WORD_BANKS);
+            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+            const words = WORD_BANKS[randomCategory];
+            
+            // Pick two different random words from same category
+            const index1 = Math.floor(Math.random() * words.length);
+            let index2 = Math.floor(Math.random() * words.length);
+            while (index2 === index1) {
+                index2 = Math.floor(Math.random() * words.length);
+            }
+            
+            // Randomly decide which is common and which is spy
+            if (Math.random() > 0.5) {
+                return { common: words[index1], spy: words[index2] };
+            } else {
+                return { common: words[index2], spy: words[index1] };
+            }
+        }
+
+        // ==========================================
+        // SOUND SYSTEM
+        // ==========================================
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        function playSound(type) {
+            if (!GameState.soundEnabled) return;
+            initAudio();
+
+            if (type === 'reveal') {
+                playRevealSound();
+                return;
+            }
+
+            if (type === 'spyReveal') {
+                playSpyRevealSound();
+                return;
+            }
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const sounds = {
+                click: { freq: 800, duration: 0.1, type: 'sine' },
+                vote: { freq: 400, duration: 0.2, type: 'square' },
+                win: { freq: 1000, duration: 0.4, type: 'sine' },
+                lose: { freq: 150, duration: 0.5, type: 'sawtooth' }
+            };
+
+            const sound = sounds[type] || sounds.click;
+            oscillator.type = sound.type;
+            oscillator.frequency.setValueAtTime(sound.freq, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + sound.duration);
+
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + sound.duration);
+        }
+
+        // Stylish reveal sound - magical chime effect
+        function playRevealSound() {
+            initAudio();
+            const now = audioCtx.currentTime;
+            
+            // Create multiple harmonics for rich sound
+            const frequencies = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 - Major chord
+            const delays = [0, 0.05, 0.1, 0.15];
+            
+            frequencies.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + delays[i]);
+                
+                gain.gain.setValueAtTime(0, now + delays[i]);
+                gain.gain.linearRampToValueAtTime(0.15, now + delays[i] + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + delays[i] + 0.5);
+                
+                osc.start(now + delays[i]);
+                osc.stop(now + delays[i] + 0.6);
+            });
+            
+            // Add shimmer effect
+            const shimmer = audioCtx.createOscillator();
+            const shimmerGain = audioCtx.createGain();
+            shimmer.connect(shimmerGain);
+            shimmerGain.connect(audioCtx.destination);
+            
+            shimmer.type = 'sine';
+            shimmer.frequency.setValueAtTime(2093, now + 0.2); // C7 - high sparkle
+            shimmer.frequency.exponentialRampToValueAtTime(4186, now + 0.5);
+            
+            shimmerGain.gain.setValueAtTime(0.08, now + 0.2);
+            shimmerGain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+            
+            shimmer.start(now + 0.2);
+            shimmer.stop(now + 0.7);
+        }
+
+        // Dramatic spy reveal sound - suspenseful effect
+        function playSpyRevealSound() {
+            initAudio();
+            const now = audioCtx.currentTime;
+            
+            // Deep ominous bass
+            const bass = audioCtx.createOscillator();
+            const bassGain = audioCtx.createGain();
+            bass.connect(bassGain);
+            bassGain.connect(audioCtx.destination);
+            
+            bass.type = 'sawtooth';
+            bass.frequency.setValueAtTime(80, now);
+            bass.frequency.exponentialRampToValueAtTime(40, now + 0.8);
+            
+            bassGain.gain.setValueAtTime(0.25, now);
+            bassGain.gain.exponentialRampToValueAtTime(0.01, now + 1);
+            
+            bass.start(now);
+            bass.stop(now + 1);
+            
+            // Dramatic stinger
+            const stingerFreqs = [220, 277.18, 329.63]; // A3, C#4, E4 - A major
+            stingerFreqs.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(freq, now + 0.3);
+                
+                gain.gain.setValueAtTime(0.12, now + 0.3);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+                
+                osc.start(now + 0.3);
+                osc.stop(now + 0.9);
+            });
+            
+            // Rising tension sweep
+            const sweep = audioCtx.createOscillator();
+            const sweepGain = audioCtx.createGain();
+            sweep.connect(sweepGain);
+            sweepGain.connect(audioCtx.destination);
+            
+            sweep.type = 'sine';
+            sweep.frequency.setValueAtTime(200, now);
+            sweep.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+            
+            sweepGain.gain.setValueAtTime(0.1, now);
+            sweepGain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+            
+            sweep.start(now);
+            sweep.stop(now + 0.4);
+        }
+
+        // Sound toggle
+        document.getElementById('soundToggle').addEventListener('click', () => {
+            GameState.soundEnabled = !GameState.soundEnabled;
+            const btn = document.getElementById('soundToggle');
+            btn.textContent = GameState.soundEnabled ? '🔊' : '🔇';
+            btn.classList.toggle('muted', !GameState.soundEnabled);
+            playSound('click');
+        });
+
+        // ==========================================
+        // LOCAL STORAGE MANAGEMENT
+        // ==========================================
+        function saveToStorage() {
+            const data = {
+                players: GameState.players,
+                totalScores: GameState.totalScores,
+                round: GameState.round,
+                mode: GameState.mode
+            };
+            localStorage.setItem('spyGameData', JSON.stringify(data));
+        }
+
+        function loadFromStorage() {
+            const data = localStorage.getItem('spyGameData');
+            if (data) {
+                const parsed = JSON.parse(data);
+                GameState.players = parsed.players || [];
+                GameState.totalScores = parsed.totalScores || {};
+                GameState.round = parsed.round || 1;
+                GameState.mode = parsed.mode || 'offline';
+                return true;
+            }
+            return false;
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('spyGameData');
+        }
+
+        // ==========================================
+        // SCREEN NAVIGATION
+        // ==========================================
+        function goToScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            playSound('click');
+        }
+
+        // ==========================================
+        // MODE SELECTION
+        // ==========================================
+        function selectMode(mode) {
+            GameState.mode = mode;
+            playSound('click');
+            
+            if (mode === 'offline') {
+                // Clear previous player data for fresh start
+                GameState.players = [];
+                goToScreen('setupScreen');
+                updatePlayerInputs();
+            } else {
+                goToScreen('onlineScreen');
+            }
+        }
+
+        // ==========================================
+        // ONLINE MULTIPLAYER
+        // ==========================================
+        
+        /*
+         * =====================================================
+         * BACKEND INTEGRATION NOTES
+         * =====================================================
+         * 
+         * This game simulates multiplayer functionality locally.
+         * To implement real multiplayer, integrate with:
+         * 
+         * 1. WEBSOCKET SERVER (e.g., Socket.io, ws)
+         *    - Connect: const socket = io('wss://your-server.com');
+         *    - Join room: socket.emit('joinRoom', { roomCode, playerName });
+         *    - Listen for updates: socket.on('playerJoined', callback);
+         *    - Broadcast votes: socket.emit('submitVote', { vote });
+         * 
+         * 2. FIREBASE REALTIME DATABASE
+         *    - Create room: firebase.database().ref('rooms/' + roomCode).set(data);
+         *    - Listen for changes: ref.on('value', snapshot => { ... });
+         *    - Update game state: ref.update({ gamePhase: 'voting' });
+         * 
+         * 3. PEER-TO-PEER (WebRTC)
+         *    - For voice chat integration
+         *    - Use PeerJS or simple-peer library
+         *    - Initialize: const peer = new Peer();
+         *    - Call: peer.call(peerId, mediaStream);
+         * 
+         * Replace the simulated functions below with actual network calls.
+         * =====================================================
+         */
+
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 5; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        function createRoom() {
+            playSound('click');
+            GameState.roomCode = generateRoomCode();
+            GameState.isHost = true;
+            GameState.currentPlayerId = 'host_' + Date.now();
+            GameState.players = [{
+                id: GameState.currentPlayerId,
+                name: 'Player 1 (Host)',
+                isHost: true
+            }];
+            
+            document.getElementById('displayRoomCode').textContent = GameState.roomCode;
+            document.getElementById('hostControls').classList.remove('hidden');
+            
+            updateLobbyPlayerList();
+            goToScreen('lobbyScreen');
+            showChat();
+            
+            // Simulate other players joining (for demo purposes)
+            simulatePlayerJoins();
+            
+            /*
+             * BACKEND: Emit room creation event
+             * socket.emit('createRoom', {
+             *     roomCode: GameState.roomCode,
+             *     hostId: GameState.currentPlayerId,
+             *     hostName: 'Player 1'
+             * });
+             */
+        }
+
+        function showJoinRoom() {
+            playSound('click');
+            document.getElementById('joinRoomForm').classList.remove('hidden');
+        }
+
+        function joinRoom() {
+            playSound('click');
+            const code = document.getElementById('roomCodeInput').value.toUpperCase().trim();
+            
+            if (code.length < 5) {
+                alert('Please enter a valid room code');
+                return;
+            }
+            
+            GameState.roomCode = code;
+            GameState.isHost = false;
+            GameState.currentPlayerId = 'player_' + Date.now();
+            
+            // Simulate joining (in real app, this would fetch room data from server)
+            GameState.players = [
+                { id: 'host_123', name: 'Player 1 (Host)', isHost: true },
+                { id: GameState.currentPlayerId, name: 'You', isHost: false }
+            ];
+            
+            document.getElementById('displayRoomCode').textContent = GameState.roomCode;
+            document.getElementById('hostControls').classList.add('hidden');
+            
+            updateLobbyPlayerList();
+            goToScreen('lobbyScreen');
+            showChat();
+            
+            /*
+             * BACKEND: Emit join room event
+             * socket.emit('joinRoom', {
+             *     roomCode: code,
+             *     playerId: GameState.currentPlayerId,
+             *     playerName: 'New Player'
+             * });
+             * 
+             * socket.on('roomData', (data) => {
+             *     GameState.players = data.players;
+             *     updateLobbyPlayerList();
+             * });
+             */
+        }
+
+        function simulatePlayerJoins() {
+            // Simulate players joining for demo
+            const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'];
+            let index = 0;
+            
+            const interval = setInterval(() => {
+                if (index >= 3 || !document.getElementById('lobbyScreen').classList.contains('active')) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                GameState.players.push({
+                    id: 'player_' + Date.now(),
+                    name: names[index],
+                    isHost: false
+                });
+                
+                updateLobbyPlayerList();
+                addChatMessage('System', `${names[index]} joined the room`);
+                index++;
+            }, 2000);
+        }
+
+        function updateLobbyPlayerList() {
+            const list = document.getElementById('lobbyPlayerList');
+            const countSpan = document.getElementById('playerCount');
+            
+            list.innerHTML = GameState.players.map((p, i) => `
+                <li class="player-item ${p.isHost ? 'host' : ''}">
+                    <div class="name">
+                        <div class="avatar">${p.name.charAt(0).toUpperCase()}</div>
+                        <span>${p.name}</span>
+                    </div>
+                    <span class="status">${p.isHost ? '👑 Host' : '✓ Ready'}</span>
+                </li>
+            `).join('');
+            
+            countSpan.textContent = GameState.players.length;
+            
+            // Enable start button if enough players
+            const startBtn = document.getElementById('startGameBtn');
+            startBtn.disabled = GameState.players.length < 3;
+        }
+
+        function copyRoomCode() {
+            playSound('click');
+            navigator.clipboard.writeText(GameState.roomCode).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => btn.textContent = originalText, 2000);
+            });
+        }
+
+        function leaveRoom() {
+            playSound('click');
+            GameState.roomCode = null;
+            GameState.players = [];
+            hideChat();
+            goToScreen('homeScreen');
+            
+            /*
+             * BACKEND: Emit leave room event
+             * socket.emit('leaveRoom', {
+             *     roomCode: GameState.roomCode,
+             *     playerId: GameState.currentPlayerId
+             * });
+             */
+        }
+
+        function startOnlineGame() {
+            playSound('click');
+            const playerCount = parseInt(document.getElementById('lobbyPlayerCount').value);
+            
+            // Assign proper names to players
+            GameState.players = GameState.players.slice(0, playerCount).map((p, i) => ({
+                ...p,
+                name: p.name || `Player ${i + 1}`
+            }));
+            
+            // Initialize scores
+            GameState.players.forEach(p => {
+                if (!GameState.totalScores[p.id]) {
+                    GameState.totalScores[p.id] = 0;
+                }
+            });
+            
+            goToScreen('wordSetupScreen');
+            
+            /*
+             * BACKEND: Emit game start event to all players
+             * socket.emit('startGame', {
+             *     roomCode: GameState.roomCode,
+             *     players: GameState.players,
+             *     settings: { playerCount }
+             * });
+             */
+        }
+
+        // ==========================================
+        // CHAT SYSTEM
+        // ==========================================
+        function showChat() {
+            document.getElementById('chatContainer').classList.remove('hidden');
+        }
+
+        function hideChat() {
+            document.getElementById('chatContainer').classList.add('hidden');
+        }
+
+        function toggleChat() {
+            const container = document.getElementById('chatContainer');
+            const btn = document.getElementById('chatToggleBtn');
+            container.classList.toggle('minimized');
+            btn.textContent = container.classList.contains('minimized') ? '+' : '−';
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const playerName = GameState.isHost ? 'You (Host)' : 'You';
+            addChatMessage(playerName, message, true);
+            input.value = '';
+            playSound('click');
+            
+            /*
+             * BACKEND: Emit chat message
+             * socket.emit('chatMessage', {
+             *     roomCode: GameState.roomCode,
+             *     playerId: GameState.currentPlayerId,
+             *     playerName: playerName,
+             *     message: message
+             * });
+             */
+        }
+
+        function addChatMessage(sender, text, isOwn = false) {
+            const container = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${isOwn ? 'own' : ''}`;
+            messageDiv.innerHTML = `
+                <div class="sender">${sender}</div>
+                <div class="text">${escapeHtml(text)}</div>
+            `;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function handleChatKeypress(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        /*
+         * VOICE CHAT INTEGRATION (WebRTC)
+         * ================================
+         * 
+         * To add voice chat, implement WebRTC peer connections:
+         * 
+         * 1. Get user media:
+         *    navigator.mediaDevices.getUserMedia({ audio: true })
+         *      .then(stream => { localStream = stream; });
+         * 
+         * 2. Create peer connections for each player:
+         *    const peerConnection = new RTCPeerConnection(config);
+         *    localStream.getTracks().forEach(track => {
+         *      peerConnection.addTrack(track, localStream);
+         *    });
+         * 
+         * 3. Handle incoming audio:
+         *    peerConnection.ontrack = (event) => {
+         *      const audio = new Audio();
+         *      audio.srcObject = event.streams[0];
+         *      audio.play();
+         *    };
+         * 
+         * 4. Signal through your WebSocket server for ICE candidates
+         *    and SDP offers/answers.
+         */
+
+        // ==========================================
+        // PLAYER SETUP (OFFLINE)
+        // ==========================================
+        function updatePlayerInputs() {
+            const count = parseInt(document.getElementById('playerCountSelect').value);
+            const container = document.getElementById('playerNamesContainer');
+            
+            let html = '';
+            for (let i = 1; i <= count; i++) {
+                const existingName = GameState.players[i - 1]?.name || '';
+                html += `
+                    <div class="form-group">
+                        <label class="form-label">Player ${i} Name</label>
+                        <input type="text" class="form-input player-name-input" 
+                               placeholder="Player ${i}" 
+                               value="${existingName}"
+                               data-index="${i - 1}">
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function goToWordSetup() {
+            playSound('click');
+            
+            // Collect player names
+            const inputs = document.querySelectorAll('.player-name-input');
+            GameState.players = [];
+            
+            inputs.forEach((input, i) => {
+                const name = input.value.trim() || `Player ${i + 1}`;
+                GameState.players.push({
+                    id: `player_${i}`,
+                    name: name,
+                    isHost: i === 0
+                });
+                
+                // Initialize scores
+                if (!GameState.totalScores[`player_${i}`]) {
+                    GameState.totalScores[`player_${i}`] = 0;
+                }
+            });
+            
+            saveToStorage();
+            goToScreen('wordSetupScreen');
+        }
+
+        // ==========================================
+        // WORD SETUP
+        // ==========================================
+        function selectWordMode(mode) {
+            playSound('click');
+            GameState.wordMode = mode;
+            
+            document.querySelectorAll('.word-mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            
+            const manualInput = document.getElementById('manualWordInput');
+            const generateBtn = document.getElementById('generateWordsBtn');
+            
+            if (mode === 'manual') {
+                manualInput.classList.remove('hidden');
+                generateBtn.textContent = '✓ Use These Words';
+            } else {
+                manualInput.classList.add('hidden');
+                generateBtn.textContent = '🎲 Generate Words';
+            }
+            
+            document.getElementById('wordPreview').classList.add('hidden');
+            document.getElementById('startRoundBtn').disabled = true;
+        }
+
+        function generateWords() {
+            playSound('click');
+            
+            let pair;
+            
+            if (GameState.wordMode === 'manual') {
+                const common = document.getElementById('commonWordInput').value.trim();
+                const spy = document.getElementById('spyWordInput').value.trim();
+                
+                if (!common || !spy) {
+                    alert('Please enter both words');
+                    return;
+                }
+                
+                pair = { common, spy };
+            } else if (GameState.wordMode === 'ai') {
+                pair = AI_WORD_PAIRS[Math.floor(Math.random() * AI_WORD_PAIRS.length)];
+            } else {
+                pair = WORD_PAIRS[Math.floor(Math.random() * WORD_PAIRS.length)];
+            }
+            
+            GameState.commonWord = pair.common;
+            GameState.spyWord = pair.spy;
+            
+            document.getElementById('previewCommon').textContent = pair.common;
+            document.getElementById('previewSpy').textContent = pair.spy;
+            document.getElementById('wordPreview').classList.remove('hidden');
+            document.getElementById('startRoundBtn').disabled = false;
+        }
+
+        // Surprise Mode: Generate simple words secretly and start immediately
+        function surpriseStart() {
+            playSound('click');
+            
+            // Generate random simple word pair from word banks (virtually unlimited combinations)
+            const pair = generateSimpleWordPair();
+            
+            GameState.commonWord = pair.common;
+            GameState.spyWord = pair.spy;
+            
+            // Don't show the words - keep them secret!
+            document.getElementById('wordPreview').classList.add('hidden');
+            
+            // Start the round directly
+            startRound();
+        }
+
+        // ==========================================
+        // GAME ROUND
+        // ==========================================
+        function startRound() {
+            playSound('click');
+            
+            // Select random spy
+            GameState.spyIndex = Math.floor(Math.random() * GameState.players.length);
+            GameState.currentPlayerIndex = 0;
+            GameState.votes = {};
+            GameState.roundScores = {};
+            GameState.gamePhase = 'reveal';
+            
+            // Initialize round scores
+            GameState.players.forEach(p => {
+                GameState.roundScores[p.id] = 0;
+            });
+            
+            showPrivacyScreen('reveal');
+        }
+
+        function showPrivacyScreen(phase) {
+            const player = GameState.players[GameState.currentPlayerIndex];
+            
+            if (phase === 'reveal') {
+                document.getElementById('privacyPlayerName').textContent = player.name;
+                goToScreen('privacyScreen');
+            } else if (phase === 'vote') {
+                document.getElementById('votePrivacyPlayerName').textContent = player.name;
+                goToScreen('votePrivacyScreen');
+            }
+        }
+
+        function playerReady() {
+            playSound('reveal');
+            
+            const player = GameState.players[GameState.currentPlayerIndex];
+            const isSpy = GameState.currentPlayerIndex === GameState.spyIndex;
+            
+            document.getElementById('revealPlayerName').textContent = player.name;
+            
+            const revealCard = document.getElementById('revealCard');
+            const revealBack = document.getElementById('revealBack');
+            const revealRole = document.getElementById('revealRole');
+            const revealWord = document.getElementById('revealWord');
+            
+            revealCard.classList.remove('flipped');
+            document.getElementById('nextPlayerBtn').disabled = true;
+            
+            if (isSpy) {
+                revealBack.classList.add('spy');
+                revealRole.textContent = '🕵️ SPY';
+                revealWord.textContent = GameState.spyWord;
+            } else {
+                revealBack.classList.remove('spy');
+                revealRole.textContent = '👤 CITIZEN';
+                revealWord.textContent = GameState.commonWord;
+            }
+            
+            goToScreen('revealScreen');
+        }
+
+        function flipCard() {
+            playSound('reveal');
+            const card = document.getElementById('revealCard');
+            card.classList.add('flipped');
+            document.getElementById('nextPlayerBtn').disabled = false;
+        }
+
+        function nextPlayer() {
+            playSound('click');
+            
+            GameState.currentPlayerIndex++;
+            
+            if (GameState.currentPlayerIndex >= GameState.players.length) {
+                // All players have seen their words
+                startDiscussion();
+            } else {
+                showPrivacyScreen('reveal');
+            }
+        }
+
+        // ==========================================
+        // DISCUSSION PHASE
+        // ==========================================
+        let discussionTimer = null;
+
+        function startDiscussion() {
+            GameState.gamePhase = 'discussion';
+            GameState.discussionTime = 180; // 3 minutes
+            
+            updateDiscussionTimer();
+            discussionTimer = setInterval(() => {
+                GameState.discussionTime--;
+                updateDiscussionTimer();
+                
+                if (GameState.discussionTime <= 0) {
+                    clearInterval(discussionTimer);
+                    // Timer ended - just stop, don't auto-advance
+                    // Player must click "Start Voting" button manually
+                    playSound('vote');
+                }
+            }, 1000);
+            
+            goToScreen('discussionScreen');
+        }
+
+        function updateDiscussionTimer() {
+            const minutes = Math.floor(GameState.discussionTime / 60);
+            const seconds = GameState.discussionTime % 60;
+            document.getElementById('discussionTimer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // ==========================================
+        // VOTING PHASE
+        // ==========================================
+        let selectedVote = null;
+
+        function startVoting() {
+            playSound('click');
+            
+            if (discussionTimer) {
+                clearInterval(discussionTimer);
+            }
+            
+            GameState.gamePhase = 'voting';
+            GameState.currentPlayerIndex = 0;
+            selectedVote = null;
+            
+            showPrivacyScreen('vote');
+        }
+
+        function voterReady() {
+            playSound('click');
+            
+            const voter = GameState.players[GameState.currentPlayerIndex];
+            document.getElementById('votingPlayerName').textContent = voter.name;
+            
+            renderVoteGrid();
+            goToScreen('votingScreen');
+        }
+
+        function renderVoteGrid() {
+            const grid = document.getElementById('voteGrid');
+            const currentPlayer = GameState.players[GameState.currentPlayerIndex];
+            
+            grid.innerHTML = GameState.players.map((player, i) => `
+                <button class="vote-btn" 
+                        data-player-id="${player.id}"
+                        ${player.id === currentPlayer.id ? 'disabled' : ''}
+                        onclick="selectVote('${player.id}')">
+                    <div class="avatar">${player.name.charAt(0).toUpperCase()}</div>
+                    <div class="name">${player.name}</div>
+                </button>
+            `).join('');
+            
+            selectedVote = null;
+            document.getElementById('confirmVoteBtn').disabled = true;
+        }
+
+        function selectVote(playerId) {
+            playSound('click');
+            selectedVote = playerId;
+            
+            document.querySelectorAll('.vote-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.playerId === playerId);
+            });
+            
+            document.getElementById('confirmVoteBtn').disabled = false;
+        }
+
+        function confirmVote() {
+            playSound('vote');
+            
+            const voter = GameState.players[GameState.currentPlayerIndex];
+            GameState.votes[voter.id] = selectedVote;
+            
+            GameState.currentPlayerIndex++;
+            
+            if (GameState.currentPlayerIndex >= GameState.players.length) {
+                // All votes collected
+                revealSpy();
+            } else {
+                selectedVote = null;
+                showPrivacyScreen('vote');
+            }
+        }
+
+        // ==========================================
+        // SPY REVEAL & SCORING
+        // ==========================================
+        function revealSpy() {
+            GameState.gamePhase = 'results';
+            goToScreen('spyRevealScreen');
+            
+            const spinner = document.getElementById('spySpinner');
+            const center = document.getElementById('spinnerCenter');
+            
+            // Spin for 3 seconds
+            setTimeout(() => {
+                spinner.classList.add('stopped');
+                playSound('spyReveal');
+                
+                const spy = GameState.players[GameState.spyIndex];
+                
+                center.classList.add('spy-revealed');
+                center.innerHTML = `
+                    <div class="spy-label">The Spy is</div>
+                    <div class="spy-name">${spy.name}</div>
+                `;
+                
+                // Calculate scores
+                calculateScores();
+                
+                // Show additional info
+                setTimeout(() => {
+                    document.getElementById('finalCommonWord').textContent = GameState.commonWord;
+                    document.getElementById('finalSpyWord').textContent = GameState.spyWord;
+                    
+                    renderVoteResults();
+                    
+                    document.getElementById('spyRevealInfo').classList.remove('hidden');
+                    document.getElementById('showScoreboardBtn').classList.remove('hidden');
+                }, 1000);
+                
+            }, 3000);
+        }
+
+        function calculateScores() {
+            const spy = GameState.players[GameState.spyIndex];
+            const N = GameState.players.length;
+            
+            // Count votes received by each player
+            const votesReceived = {};
+            GameState.players.forEach(p => votesReceived[p.id] = 0);
+            
+            Object.values(GameState.votes).forEach(votedFor => {
+                votesReceived[votedFor]++;
+            });
+            
+            const spyVotes = votesReceived[spy.id];
+            
+            // Calculate scores based on the rules
+            if (spyVotes >= 1) {
+                // CASE 1: Spy received at least 1 vote
+                
+                // Spy loses points equal to votes received
+                GameState.roundScores[spy.id] = -spyVotes;
+                
+                // For each non-spy player
+                GameState.players.forEach(player => {
+                    if (player.id === spy.id) return;
+                    
+                    let score = 0;
+                    
+                    // +1 if voted for spy
+                    if (GameState.votes[player.id] === spy.id) {
+                        score += 1;
+                    }
+                    
+                    // -votes received
+                    score -= votesReceived[player.id];
+                    
+                    GameState.roundScores[player.id] = score;
+                });
+                
+            } else {
+                // CASE 2: Spy received 0 votes (spy wins)
+                
+                // Spy gets +(N-1) points
+                GameState.roundScores[spy.id] = N - 1;
+                
+                // Each non-spy loses votes they received
+                GameState.players.forEach(player => {
+                    if (player.id === spy.id) return;
+                    GameState.roundScores[player.id] = -votesReceived[player.id];
+                });
+            }
+            
+            // Update total scores
+            GameState.players.forEach(player => {
+                GameState.totalScores[player.id] = 
+                    (GameState.totalScores[player.id] || 0) + GameState.roundScores[player.id];
+            });
+            
+            saveToStorage();
+        }
+
+        function renderVoteResults() {
+            const container = document.getElementById('voteResults');
+            const spy = GameState.players[GameState.spyIndex];
+            
+            container.innerHTML = GameState.players.map(player => {
+                const votedFor = GameState.players.find(p => p.id === GameState.votes[player.id]);
+                const votedCorrectly = GameState.votes[player.id] === spy.id;
+                
+                return `
+                    <div class="vote-result-item">
+                        <span class="voter">${player.name}</span>
+                        <span class="arrow">→</span>
+                        <span class="voted-for ${votedCorrectly ? 'text-success' : ''}">
+                            ${votedFor ? votedFor.name : 'N/A'}
+                            ${votedCorrectly ? '✓' : ''}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showScoreboard() {
+            playSound('click');
+            renderScoreboard();
+            goToScreen('scoreboardScreen');
+        }
+
+        function renderScoreboard() {
+            document.getElementById('roundNumber').textContent = GameState.round;
+            
+            // Sort players by total score
+            const sortedPlayers = [...GameState.players].sort((a, b) => 
+                GameState.totalScores[b.id] - GameState.totalScores[a.id]
+            );
+            
+            const spy = GameState.players[GameState.spyIndex];
+            
+            const tbody = document.getElementById('scoreboardBody');
+            tbody.innerHTML = sortedPlayers.map((player, index) => {
+                const roundScore = GameState.roundScores[player.id] || 0;
+                const totalScore = GameState.totalScores[player.id] || 0;
+                const isSpy = player.id === spy.id;
+                
+                let rankClass = '';
+                if (index === 0) rankClass = 'rank-1';
+                else if (index === 1) rankClass = 'rank-2';
+                else if (index === 2) rankClass = 'rank-3';
+                
+                return `
+                    <tr class="${isSpy ? 'spy-row' : ''}">
+                        <td class="rank ${rankClass}">${index + 1}</td>
+                        <td>${player.name}</td>
+                        <td class="${roundScore >= 0 ? 'score-positive' : 'score-negative'}">
+                            ${roundScore >= 0 ? '+' : ''}${roundScore}
+                        </td>
+                        <td class="${totalScore >= 0 ? 'score-positive' : 'score-negative'}">
+                            ${totalScore >= 0 ? '+' : ''}${totalScore}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // GAME END OPTIONS
+        // ==========================================
+        function replayGame() {
+            playSound('click');
+            
+            // Keep players and scores, start new round
+            GameState.round++;
+            GameState.spyIndex = -1;
+            GameState.commonWord = '';
+            GameState.spyWord = '';
+            GameState.votes = {};
+            GameState.roundScores = {};
+            GameState.gamePhase = 'setup';
+            
+            // Save player names and scores to localStorage for persistence
+            saveToStorage();
+            
+            // Clear word preview
+            document.getElementById('wordPreview').classList.add('hidden');
+            document.getElementById('startRoundBtn').disabled = true;
+            document.getElementById('commonWordInput').value = '';
+            document.getElementById('spyWordInput').value = '';
+            
+            // Reset reveal UI
+            document.getElementById('spyRevealInfo').classList.add('hidden');
+            document.getElementById('showScoreboardBtn').classList.add('hidden');
+            document.getElementById('spySpinner').classList.remove('stopped');
+            document.getElementById('spinnerCenter').classList.remove('spy-revealed');
+            document.getElementById('spinnerCenter').innerHTML = `
+                <div class="icon">🕵️</div>
+                <div class="text">Who is it?</div>
+            `;
+            
+            goToScreen('wordSetupScreen');
+        }
+
+        function exitGame() {
+            playSound('click');
+            showExitModal();
+        }
+
+        function showExitModal() {
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            playSound('click');
+            document.getElementById('modalOverlay').classList.add('hidden');
+        }
+
+        function confirmExit() {
+            playSound('click');
+            closeModal();
+            
+            // Clear everything from localStorage
+            clearStorage();
+            
+            // Reset all game state
+            GameState.mode = 'offline';
+            GameState.roomCode = null;
+            GameState.isHost = false;
+            GameState.players = [];
+            GameState.spyIndex = -1;
+            GameState.commonWord = '';
+            GameState.spyWord = '';
+            GameState.votes = {};
+            GameState.roundScores = {};
+            GameState.totalScores = {};
+            GameState.round = 1;
+            GameState.gamePhase = 'setup';
+            
+            // Reset UI elements
+            document.getElementById('wordPreview').classList.add('hidden');
+            document.getElementById('startRoundBtn').disabled = true;
+            document.getElementById('spyRevealInfo').classList.add('hidden');
+            document.getElementById('showScoreboardBtn').classList.add('hidden');
+            document.getElementById('playerNamesContainer').innerHTML = '';
+            document.getElementById('commonWordInput').value = '';
+            document.getElementById('spyWordInput').value = '';
+            
+            // Reset reveal UI
+            document.getElementById('spySpinner').classList.remove('stopped');
+            document.getElementById('spinnerCenter').classList.remove('spy-revealed');
+            document.getElementById('spinnerCenter').innerHTML = `
+                <div class="icon">🕵️</div>
+                <div class="text">Who is it?</div>
+            `;
+            
+            hideChat();
+            goToScreen('homeScreen');
+            updatePlayerInputs();
+        }
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for saved game
+            if (loadFromStorage() && GameState.players.length > 0) {
+                console.log('Found saved game data');
+            }
+            
+            // Initialize player inputs
+            updatePlayerInputs();
+            
+            // Prevent default form submission
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
+
+        // ==========================================
+        // SERVICE WORKER REGISTRATION (Optional PWA)
+        // ==========================================
+        /*
+         * To make this a Progressive Web App:
+         * 
+         * 1. Create a manifest.json file
+         * 2. Create a service-worker.js file
+         * 3. Register the service worker:
+         * 
+         * if ('serviceWorker' in navigator) {
+         *     navigator.serviceWorker.register('/service-worker.js')
+         *         .then(reg => console.log('SW registered'))
+         *         .catch(err => console.log('SW registration failed'));
+         * }
+         */
+    </script>
+</body>
+</html>
